@@ -1996,3 +1996,9 @@ Providers will change.
 The assistant should remain.
 
 > **Build the body and nervous system so that every future generation of intelligence has somewhere useful to live.**
+
+## License
+
+This repository is licensed under [Creative Commons Attribution-NonCommercial 4.0 International](https://creativecommons.org/licenses/by-nc/4.0/) (CC BY-NC 4.0). See [LICENSE](./LICENSE).
+
+Each core is a separate repository linked here as a git submodule and carries its own terms.
