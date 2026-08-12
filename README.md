@@ -51,7 +51,7 @@ Every directory below is a git submodule pointing at a standalone repository.
 
 | Core | Owns | Status |
 | --- | --- | --- |
-| [`core-runtime`](./core-runtime) | lifecycle, configuration, events, component registry, local API, health | Phase 0 complete |
+| [`core-runtime`](./core-runtime) | lifecycle, configuration, events, component registry, local API, health | foundation complete |
 | [`activation-core`](./activation-core) | activation providers and detection events | v0.1 complete |
 | [`speech-system`](./speech-system) | Scribe Core, Voice Core, Realtime Core | component foundations complete |
 | [`intelligence-core`](./intelligence-core) | model gateway, context, action, production boundaries | core complete |
@@ -67,46 +67,48 @@ adapters.
 
 ## Planned structure
 
-The nine repositories above are the beginning, not the shape. The full system is
-planned as twenty-one phases. Each phase is expected to produce one real, testable
-capability before the next major layer is added — the architecture grows vertically,
-not by scaffolding everything at once.
-
-Phases describe direction, not a fixed schedule.
+The nine repositories above are the beginning, not the shape. Below is the full set
+of cores the system is planned to consist of, and what each one owns. Cores are
+added one at a time — each must produce a real, testable capability before the next
+major layer begins.
 
 ### Built
 
-| Phase | Capability | Where it lives |
+| Core | What it is | Subsystems |
 | --- | --- | --- |
-| 0 | **Foundation** — lifecycle, configuration, structured logging, local API, health, event bus, component registration, clean shutdown | `core-runtime` |
-| 1 | **Device and Satellite Protocol** — device identity, room, capabilities, status, simulator; physical integration pending | `device-network` |
-| 2 | **Voice Runtime** — replaceable WakeWord / STT / TTS / VAD providers, streaming, natural interruption; Interaction Core and full AEC pending | `speech-system`, `activation-core` |
-| 3 | **Model Provider Layer** — provider-independent model contracts, context assembly, policy-gated actions; unified general model loop pending | `intelligence-core` |
-| 8 | **State Engine** — current facts with provenance, freshness, confidence, revisions, subscriptions | `state-core` |
+| `core-runtime` | The nervous system. Component lifecycle, configuration, structured logging, local API, health aggregation, clean shutdown. Exists and runs with no AI present. | event bus, component registry, local JSON API, health, logger |
+| `activation-core` | Decides when the assistant is being addressed. Provider-independent detection, emits activation events and PCM frames. | activation providers, Windows listener |
+| `speech-system` | Everything between air and text, and back. | **Scribe Core** (wake word, VAD, streaming STT), **Voice Core** (TTS, controlled local playback), **Realtime Core** (persistent native-audio sessions, barge-in hard stop) |
+| `intelligence-core` | Makes the model a replaceable component. Provider-neutral model contracts, context assembly, policy-gated tool loop, production routing. | model gateway, context assembly, action boundary, Gemini REST adapter |
+| `memory-core` | Deliberate long-term knowledge. What is remembered is a decision, not a side effect. | durable store, retrieval, summaries |
+| `state-core` | Current facts, not history. Provenance, freshness, confidence, revision protection, subscriptions. | snapshots, TTL freshness, subscriptions, context adapter |
+| `device-network` | Physical endpoints as first-class citizens. Microphones, speakers, displays, and sensors exist independently of the core. | typed protocol, registry, WebSocket transport, authentication, liveness, simulator |
+| `assistant-runtime` | The composition root. The only component that knows about more than one core. | interaction lifecycle, typed adapters, conversation memory |
 
 ### Planned
 
-| Phase | Capability |
+| Core | What it is |
 | --- | --- |
-| 4 | **Agent Runtime and Tool Calling** — the model reasons over platform capabilities, with iteration limits, timeouts, cancellation, structured errors, and execution tracing |
-| 5 | **Permission and Policy Engine** — enforceable capability boundaries the model cannot bypass |
-| 6 | **Physical Environment Integration** — reasoning over "this room", "the front door", not raw entity identifiers |
-| 7 | **Display Protocol** — structured visual output without opening an application |
-| 9 | **Persistent Memory** — deliberate long-term context, owned by the platform, independent of the provider (partially built in `memory-core`) |
-| 10 | **Automation Engine** — deterministic triggers, conditions, and actions that run without AI |
-| 11 | **Proactive Assistant** — selected events become candidate interruptions |
-| 12 | **Model Router** — route by complexity, latency, privacy, availability, context size, cost; cheapest adequate intelligence by default |
-| 13 | **Background Tasks** — work that outlives conversations and devices |
-| 14 | **Tool Ecosystem** — digital capabilities behind stable agent-native contracts |
-| 15 | **Multi-Room Assistant** — many satellites, one persistent assistant that knows where a request came from |
-| 16 | **Presence and Environmental Context** — interaction follows the user, respecting privacy and uncertainty |
-| 17 | **Reliability** — predictable degradation instead of collapse |
-| 18 | **Security Hardening** — authentication, network isolation, encryption, secrets, tool permissions, prompt injection, audit logs, memory privacy, device spoofing, microphone isolation |
-| 19 | **Tool SDK** — new capabilities as plugins, not architectural changes |
-| 20 | **Long-Term Agent Platform** — deliberately open-ended: cooperating agents, local multimodal models, wearables, vision, robotics, knowledge graphs, cross-device continuity |
+| `interaction-core` | Turn-taking and conversation shape as an explicit subsystem of the speech system, plus full acoustic echo cancellation. Currently the largest gap in the voice path. |
+| `agent-runtime` | The tool-calling loop. Context, model, tool, result, answer — with iteration limits, timeouts, cancellation, structured errors, and execution tracing. |
+| `policy-core` | Enforceable capability boundaries. The model may request actions; this decides whether they happen. The model cannot bypass it. |
+| `environment-core` | A bridge to mature smart-home infrastructure, so the assistant reasons over "this room" and "the front door" instead of raw entity identifiers. |
+| `display-core` | Structured visual output. A spoken request can produce something to look at without opening an application. |
+| `automation-core` | Deterministic triggers, conditions, and actions that run without any AI involvement. |
+| `proactivity-core` | Turns selected events into candidate interruptions. The step from reactive software to an ambient assistant. |
+| `model-router` | Routes each task by complexity, latency, privacy, availability, context size, and cost. Cheapest adequate intelligence by default, not the most expensive one. |
+| `task-core` | Background work that outlives the conversation and the device it started on. |
+| `tool-registry` | Digital capabilities behind stable, agent-native contracts — plus an SDK so new capabilities are plugins, not architectural changes. |
+| `presence-core` | Multi-room presence and environmental context, so interaction follows the user while respecting privacy and uncertainty. |
 
-Phase 20 has no endpoint by design. The point is not to implement those things
-because they can be imagined — it is to avoid making them unnecessarily difficult.
+Two concerns are deliberately **not** cores, because they are properties of every
+core rather than a place in the system: **reliability** (failures degrade
+predictably instead of collapsing) and **security** (authentication, network
+isolation, secrets, tool permissions, prompt injection, audit logs, memory privacy,
+device spoofing, microphone isolation).
+
+The list has no end state by design. The goal is not to build everything that can be
+imagined — it is to avoid making any of it unnecessarily difficult later.
 
 ## Why submodules
 
