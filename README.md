@@ -19,6 +19,8 @@ so both repositories initially resolve to the same verified code graph.
 
 Assistant mark I remains the historical snapshot. Submodule pointers and root
 documentation may evolve in this repository without changing the Mark I history.
+The `mark-i-baseline` tag is retained in this repository, the Mark I root, and
+each child repository so the inherited code graph can be restored explicitly.
 
 ## On the name "Jarvis"
 
@@ -184,6 +186,12 @@ worth the small amount of ceremony:
 
 ```bash
 git clone --recurse-submodules https://github.com/Brightwav3/Assistant-mark-II.git
+```
+
+To restore the inherited Mark I baseline instead, use the stable tag:
+
+```bash
+git clone --branch mark-i-baseline --recurse-submodules https://github.com/Brightwav3/Assistant-mark-II.git
 ```
 
 `--recurse-submodules` is required; without it the core directories are empty.
