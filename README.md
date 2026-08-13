@@ -1,6 +1,6 @@
-# Assistant mark I
+# Assistant mark II
 
-[![Integration](https://github.com/Brightwav3/Assistant-mark-I/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Brightwav3/Assistant-mark-I/actions/workflows/ci.yml)
+[![Integration](https://github.com/Brightwav3/Assistant-mark-II/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Brightwav3/Assistant-mark-II/actions/workflows/ci.yml)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-4c1d95)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Architecture: git submodules](https://img.shields.io/badge/Architecture-git%20submodules-6f42c1)](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
@@ -9,6 +9,16 @@ Infrastructure for a persistent, ambient, model-independent personal assistant.
 This is the meta-repository. It contains the manifesto and every core linked as a
 git submodule. Each core remains a fully independent repository with its own
 history, workplan, and issues.
+
+## Lineage
+
+Assistant mark II continues the completed [Assistant mark I](https://github.com/Brightwav3/Assistant-mark-I)
+meta-repository. Its initial baseline preserves the exact gitlink set recorded by
+Mark I commit [`99904d7`](https://github.com/Brightwav3/Assistant-mark-I/commit/99904d756d370ccc585640b5eb430f4b1bd0626c),
+so both repositories initially resolve to the same verified code graph.
+
+Assistant mark I remains the historical snapshot. Submodule pointers and root
+documentation may evolve in this repository without changing the Mark I history.
 
 ## On the name "Jarvis"
 
@@ -55,7 +65,7 @@ The native realtime path is intentionally a foundation for full-duplex, not a
 full-duplex assistant yet. [full-duplex-attempts](https://github.com/Brightwav3/full-duplex-attempts)
 records the experiments, criteria, and limitations behind that distinction.
 
-`Assistant-mark-I` currently runs a native bidirectional audio session through
+The Mark II baseline runs a native bidirectional audio session through
 Gemini Live. That solves the media plumbing, but Gemini Live is still a
 generation-2, turn-based model: it waits for the user to stop before responding
 and cannot backchannel while the user is speaking. This is a model limitation,
@@ -102,7 +112,7 @@ Every directory below is a git submodule pointing at a standalone repository.
 | [`device-network`](./device-network) | protocol, registry, WebSocket transport, liveness, commands | v0.1 complete |
 | [`tool-system`](./tool-system) | the tool contract, brokered execution, policy enforcement point | v0.1 complete |
 | [`host-tools`](./host-tools) | the capability catalogue declared against that contract | v0.1 complete |
-| [`assistant-runtime`](./assistant-runtime) | cross-core composition, interaction lifecycle, realtime tools, and operator diagnostics | **Mark I complete** — native realtime slice verified on hardware; modular path deferred |
+| [`assistant-runtime`](./assistant-runtime) | cross-core composition, interaction lifecycle, realtime tools, and operator diagnostics | **Mark II baseline** — inherited Mark I native realtime slice verified on hardware; modular path deferred |
 | [`activation-gemini-bridge`](./activation-gemini-bridge) | temporary activation-to-realtime bridge | temporary |
 
 The cores have **zero imports between each other**. The only component that knows
@@ -173,7 +183,7 @@ worth the small amount of ceremony:
 ## Getting started
 
 ```bash
-git clone --recurse-submodules https://github.com/Brightwav3/Assistant-mark-I.git
+git clone --recurse-submodules https://github.com/Brightwav3/Assistant-mark-II.git
 ```
 
 `--recurse-submodules` is required; without it the core directories are empty.
@@ -202,7 +212,7 @@ stopped playback immediately, it wrote a summary of the conversation to SQLite,
 the interaction timed out on its own, and after a restart it still knew what had
 been said.
 
-The model can also act. In the Mark I default composition, Gemini discovers the
+The model can also act. In the Mark II baseline composition, Gemini discovers the
 safe read-only `get_time`, `calculate`, `uptime`, and `system_status` tools;
 Tool System validates the arguments, consults policy, applies its guards, and
 returns the result to the realtime session. The default tool path was exercised
