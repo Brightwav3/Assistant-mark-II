@@ -1,4 +1,4 @@
-# Assistant M.A.R.K. II
+# Merely A Responsive Kernel II
 
 [![Integration](https://github.com/Brightwav3/Assistant-mark-II/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Brightwav3/Assistant-mark-II/actions/workflows/ci.yml)
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial-4c1d91)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
@@ -6,7 +6,8 @@
 
 Infrastructure for an intelligent, capable, model-independent personal assistant.
 
-**M.A.R.K.** stands for **Merely a Responsive Kernel**.
+M.A.R.K. II is a new generation of the assistant, continuing from the completed
+M.A.R.K. I proof of concept.
 
 M.A.R.K. is not a chatbot, a voice model, a desktop application, or a single AI
 provider. It is the persistent platform around those components: the kernel that
