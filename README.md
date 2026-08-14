@@ -159,7 +159,7 @@ Known limitation from the same run: the Live API accepts no transcription langua
 hint, so stored episode transcripts can carry phonetically correct text in the
 wrong script. Delegated recall is unaffected — it reads memory records, not raw
 transcripts. The procedure and the full evidence split are in
-[the delegated voice smoke test](./assistant-runtime/docs/delegated-voice-smoke-test.md).
+[the delegated voice smoke test](https://github.com/Brightwav3/assistant-runtime/blob/15cd9dab049deefbb93da5803fc1ac0c218c90a3/docs/delegated-voice-smoke-test.md).
 
 ### M.A.R.K. III — Future
 
