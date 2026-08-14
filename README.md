@@ -115,6 +115,56 @@ Its priorities are:
 - state-aware workflows and provider switching;
 - full-duplex-ready event and lifecycle contracts.
 
+#### Delivered — delegated voice intelligence
+
+The first of those priorities is done and hardware-verified. A voice session can
+hand deeper work to a separately configured reasoning model, keep talking to the
+user while it runs, and speak the result when it arrives.
+
+```text
+User speaks (Czech)
+    ↓
+Gemini Live                          intelligence_delegate — the only tool it has
+    ↓ accepted immediately, no result
+Delegation Broker                    mints the execution, owns limits and cancellation
+    ↓
+Intelligence Core                    a separately configured text model
+    ↓
+Tool System → Memory Core            memory_search, memory_view — bounded, read-only
+    ↓ delegation.result.v1
+Delivery Scheduler                   interrupt / when_idle / silent
+    ↓
+the same voice session               labelled source=delegation, never a user transcript
+```
+
+Verified on hardware, 2026-08-14, Gemini Live 3.1 voice with a
+`gemini-3.5-flash-lite` delegation model:
+
+| Claim | Evidence |
+| --- | --- |
+| Acknowledgement is immediate and carries no answer | Tool returns a continuation; the result arrives separately |
+| The user keeps talking while delegation runs | Live session, follow-up question answered mid-flight |
+| The result returns to the same conversation | Native context injection, no degraded fallback taken |
+| `when_idle` waits for the assistant to stop speaking | Result queued behind the acknowledgement, then delivered |
+| The answer comes from memory, not invention | Spoken detail matched the stored record exactly |
+| End-to-end delegation latency | ~2 s |
+
+The boundaries hold: the voice model receives only the delegation tool, the
+delegated model never receives the delegation tool and so cannot recurse, every
+downstream call passes through Tool System, and memory bounds are enforced inside
+Memory Core rather than trusted to a declaration a model can read.
+
+Alongside it, every configured model — voice, text, retries, failures that still
+consumed tokens — emits one normalized usage record. Missing provider usage stays
+unknown rather than becoming zero, and an unpriced call follows an explicit policy
+that is fail-closed by default.
+
+Known limitation from the same run: the Live API accepts no transcription language
+hint, so stored episode transcripts can carry phonetically correct text in the
+wrong script. Delegated recall is unaffected — it reads memory records, not raw
+transcripts. The procedure and the full evidence split are in
+[the delegated voice smoke test](./assistant-runtime/docs/delegated-voice-smoke-test.md).
+
 ### M.A.R.K. III — Future
 
 M.A.R.K. III is a future generation, outside the current M.A.R.K. II scope. It
