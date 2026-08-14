@@ -42,3 +42,6 @@
 	path = host-tools
 	url = https://github.com/Brightwav3/host-tools.git
 	branch = main
+[submodule "aec-system"]
+	path = aec-system
+	url = https://github.com/Brightwav3/aec-system.git
