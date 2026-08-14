@@ -104,6 +104,22 @@ M.A.R.K. II remains half-duplex. It extracts the maximum useful capability from
 the current conversational model paradigm while keeping the platform ready for
 a different future.
 
+### Native-only composition boundary
+
+The active Mark II runtime intentionally has one speech route:
+
+```text
+microphone → AEC System → Realtime Core → Gemini Live
+                                      ├→ tools / memory / state
+                                      └→ response audio
+```
+
+The former local `Scribe Core → Intelligence Core → Voice Core` composition is
+retired from `assistant-runtime`. It is not a fallback path, not a second mode,
+and not part of the integration dependency graph. Scribe Core and Voice Core
+remain independent sibling repositories for their own component work; Mark II
+uses Gemini Live for speech understanding and response audio.
+
 Its priorities are:
 
 - Voice × Intelligence integration;
@@ -234,10 +250,10 @@ M.A.R.K. II still has important application work to do around that model limit:
   Tools catalogue, and returns the result to the native session. The default
   read-only path is hardware-verified; side-effecting tools such as `open_app`
   remain explicit opt-ins.
-- **No shared acoustic signal path.** Scribe Core owns capture and Realtime
-  Core owns playback, deliberately as independent repositories. Acoustic echo
-  cancellation needs both signals on one timeline, so the current decomposition
-  gives AEC nowhere to live while the microphone stays open during playback.
+- **Native Gemini Live signal path.** The active Mark II composition routes cleaned
+  microphone PCM through Realtime Core into Gemini Live, which owns speech
+  understanding and response audio. Scribe Core and Voice Core remain independent
+  component repositories, but they are not part of the production native path.
 
 The full-duplex problem is therefore not one missing feature. The model sets the
 ceiling; M.A.R.K. II still has to provide delegation, cancellation, recovery,
@@ -270,8 +286,8 @@ the owner of memory, permissions, tools, state, or lifecycle.
 ### Host platform support
 
 Shared runtime, contracts, memory, state, intelligence, tools, and the realtime
-contracts are platform-neutral. Microphone capture, speaker playback, local
-STT/TTS, and the activation input are platform leaves selected by
+contracts are platform-neutral. Microphone capture, speaker playback, and the
+activation input are platform leaves selected by
 `createPlatformServices(process.platform)` in
 [`assistant-runtime/src/platform`](./assistant-runtime/src/platform). Shared
 composition never constructs a platform implementation directly.
@@ -279,20 +295,20 @@ composition never constructs a platform implementation directly.
 | Host | Status | Evidence |
 | --- | --- | --- |
 | Windows (win32) | **VERIFIED** | Source, deterministic tests, and the Windows CI job with real ffmpeg/ffplay |
-| macOS (darwin) | **MISSING** | No adapter. The factory returns a structured `unsupported` capability; microphone, playback, and modular speech report `degraded` with a reason |
+| macOS (darwin) | **MISSING** | No adapter. The factory returns a structured `unsupported` capability; microphone and playback report `degraded` with a reason |
 | Linux | **MISSING** | Same as macOS |
 
 Remaining work before either non-Windows host may be called supported:
 
-1. Write a `darwin` leaf (CoreAudio or AVFoundation capture, `afplay`/ffplay
-   playback, a local STT/TTS binding) and a `linux` leaf (ALSA/PulseAudio
-   capture, ffplay playback, a local STT/TTS binding).
+1. Write a `darwin` leaf (CoreAudio or AVFoundation capture and
+   `afplay`/ffplay playback) and a `linux` leaf (ALSA/PulseAudio capture and
+   ffplay playback).
 2. Confirm the `decibri` capture dependency actually installs and opens a device
    on each host. Its package metadata advertises win32/darwin/linux; that
    metadata is not evidence.
-3. Run a real device smoke test — capture a clap, play PCM back, complete one
-   modular turn — on physical macOS and Linux machines or a self-hosted runner
-   with an audio device.
+3. Run a real device smoke test — capture a clap, play PCM back, and complete
+   one native Gemini Live turn — on physical macOS and Linux machines or a
+   self-hosted runner with an audio device.
 
 No macOS or Linux hardware has been exercised. The cross-platform CI leg is a
 non-blocking typecheck only and proves nothing about audio behaviour.
@@ -454,9 +470,9 @@ M.A.R.K. II therefore improves the application boundary around the model:
   required for AEC;
 - provider-specific behavior must remain behind provider-neutral contracts.
 
-The modular Scribe → Intelligence → Voice path is not yet hardware-verified as
-the primary conversation path. The native realtime safe-tool path is verified;
-the explicit `open_app` process-launch probe remains separate.
+The modular Scribe → Intelligence → Voice path is retired from the Mark II
+composition. The native Gemini Live safe-tool path is verified; the explicit
+`open_app` process-launch probe remains separate.
 
 ---
 
@@ -525,9 +541,7 @@ for dir in \
   state-core \
   tool-system \
   host-tools \
-  "speech-system/realtime core" \
-  "speech-system/scribe core" \
-  "speech-system/voice core"; do
+  "speech-system/realtime core"; do
   (
     cd "$dir"
     npm install
