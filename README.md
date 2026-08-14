@@ -160,9 +160,13 @@ unknown rather than becoming zero, and an unpriced call follows an explicit poli
 that is fail-closed by default.
 
 Known limitation from the same run: the Live API accepts no transcription language
-hint, so stored episode transcripts can carry phonetically correct text in the
-wrong script. Delegated recall is unaffected — it reads memory records, not raw
-transcripts. The procedure and the full evidence split are in
+hint, so the provider's diagnostic transcript can carry phonetically correct text
+in the wrong script. With the opt-in `assistant-runtime` `debug.heard` path, the
+model-derived `meaning` becomes the episode input and the provider transcript is
+excluded from memory extraction; the per-run JSONL still preserves `verbatim` as
+auditable evidence. This improves the stored text without pretending to be raw
+ASR, and delegated recall remains protected by the Memory Core pipeline. The
+procedure and the full evidence split are in
 [the delegated voice smoke test](./assistant-runtime/docs/delegated-voice-smoke-test.md).
 
 ### M.A.R.K. III — Future
