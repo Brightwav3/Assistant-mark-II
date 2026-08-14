@@ -125,7 +125,11 @@ The two diagrams below show the delivered path at two levels: the first is the
 structural architecture, and the second is the observed `when_idle` execution
 timeline.
 
+##### Structural architecture
+
 ![Delegated voice intelligence architecture](./docs/assets/delegated_voice_intelligence_architecture_v5_toolsystem.png)
+
+##### `when_idle` execution timeline
 
 ![Delegation timeline with when_idle delivery](./docs/assets/delegation_timeline_when_idle_v2_corrected.png)
 
