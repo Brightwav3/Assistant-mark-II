@@ -25,19 +25,19 @@ jobs:
         shell: bash
         run: |
           set -e
-          for dir in activation-core core-runtime device-network intelligence-core memory-core state-core tool-system host-tools "speech-system/realtime core" "speech-system/scribe core" "speech-system/voice core"; do
+          for dir in activation-core core-runtime device-network intelligence-core memory-core aec-system state-core tool-system host-tools "speech-system/realtime core" "speech-system/scribe core" "speech-system/voice core"; do
             echo "::group::$dir"
             (cd "$dir" && npm install --no-audit --no-fund && npm run verify)
             echo "::endgroup::"
           done
       - name: Verify composed runtime
         working-directory: assistant-runtime
-        run: npm install --no-audit --no-fund && npm run verify
+        run: npm install --package-lock=false --no-audit --no-fund && npm run verify
 
-  # Portability signal only. It proves the shared runtime type-checks off Windows;
+  # Portability signal only. It verifies platform-neutral child cores off Windows;
   # it proves nothing about microphone, speaker, or local speech behaviour there.
-  # Non-blocking on purpose: no macOS/Linux audio adapter exists yet, and the
-  # native capture dependency is not known to install on these runners.
+  # The composed runtime remains covered by the Windows integration job because
+  # its relative speech packages include native capture dependencies.
   portability-typecheck:
     continue-on-error: true
     strategy:
@@ -55,11 +55,8 @@ jobs:
       - name: Typecheck the platform-neutral cores
         run: |
           set -e
-          for dir in intelligence-core memory-core state-core tool-system device-network "speech-system/realtime core"; do
+          for dir in intelligence-core memory-core aec-system state-core tool-system device-network; do
             echo "::group::$dir"
             (cd "$dir" && npm install --no-audit --no-fund && npm run typecheck)
             echo "::endgroup::"
           done
-      - name: Typecheck the composed runtime and its platform factory
-        working-directory: assistant-runtime
-        run: npm install --no-audit --no-fund && npm run typecheck
