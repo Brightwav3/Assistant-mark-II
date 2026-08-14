@@ -33,3 +33,33 @@ jobs:
       - name: Verify composed runtime
         working-directory: assistant-runtime
         run: npm install --no-audit --no-fund && npm run verify
+
+  # Portability signal only. It proves the shared runtime type-checks off Windows;
+  # it proves nothing about microphone, speaker, or local speech behaviour there.
+  # Non-blocking on purpose: no macOS/Linux audio adapter exists yet, and the
+  # native capture dependency is not known to install on these runners.
+  portability-typecheck:
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Typecheck the platform-neutral cores
+        run: |
+          set -e
+          for dir in intelligence-core memory-core state-core tool-system device-network "speech-system/realtime core"; do
+            echo "::group::$dir"
+            (cd "$dir" && npm install --no-audit --no-fund && npm run typecheck)
+            echo "::endgroup::"
+          done
+      - name: Typecheck the composed runtime and its platform factory
+        working-directory: assistant-runtime
+        run: npm install --no-audit --no-fund && npm run typecheck

@@ -213,6 +213,36 @@ future infrastructure remain separate responsibilities.
 The voice model is an interaction intelligence client of the platform. It is not
 the owner of memory, permissions, tools, state, or lifecycle.
 
+### Host platform support
+
+Shared runtime, contracts, memory, state, intelligence, tools, and the realtime
+contracts are platform-neutral. Microphone capture, speaker playback, local
+STT/TTS, and the activation input are platform leaves selected by
+`createPlatformServices(process.platform)` in
+[`assistant-runtime/src/platform`](./assistant-runtime/src/platform). Shared
+composition never constructs a platform implementation directly.
+
+| Host | Status | Evidence |
+| --- | --- | --- |
+| Windows (win32) | **VERIFIED** | Source, deterministic tests, and the Windows CI job with real ffmpeg/ffplay |
+| macOS (darwin) | **MISSING** | No adapter. The factory returns a structured `unsupported` capability; microphone, playback, and modular speech report `degraded` with a reason |
+| Linux | **MISSING** | Same as macOS |
+
+Remaining work before either non-Windows host may be called supported:
+
+1. Write a `darwin` leaf (CoreAudio or AVFoundation capture, `afplay`/ffplay
+   playback, a local STT/TTS binding) and a `linux` leaf (ALSA/PulseAudio
+   capture, ffplay playback, a local STT/TTS binding).
+2. Confirm the `decibri` capture dependency actually installs and opens a device
+   on each host. Its package metadata advertises win32/darwin/linux; that
+   metadata is not evidence.
+3. Run a real device smoke test — capture a clap, play PCM back, complete one
+   modular turn — on physical macOS and Linux machines or a self-hosted runner
+   with an audio device.
+
+No macOS or Linux hardware has been exercised. The cross-platform CI leg is a
+non-blocking typecheck only and proves nothing about audio behaviour.
+
 ---
 
 ## Repository structure
