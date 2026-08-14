@@ -1,0 +1,37 @@
+---
+import "../styles/site.css";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import { site } from "../data/site";
+
+interface Props { title?: string; description?: string; }
+const { title, description = site.description } = Astro.props;
+const full = title ? title + " — " + site.title : site.title + " — " + site.tagline;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content={full} />
+    <meta property="og:description" content={description} />
+    <title>{full}</title>
+    <script is:inline>
+      // Set the theme before first paint so there is no flash.
+      (() => {
+        let t = null;
+        try { t = localStorage.getItem("mark-devlog-theme"); } catch (e) {}
+        if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
+  </head>
+  <body>
+    <SiteHeader />
+    <main><slot /></main>
+    <SiteFooter />
+  </body>
+</html>

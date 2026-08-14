@@ -1,0 +1,53 @@
+@import url("./ds/styles.css");
+
+/* Fidelio applied to a static devlog. Tokens only — no new colors, no new type sizes. */
+:root { --measure: 68ch; --shell: 1080px; }
+
+body {
+  margin: 0;
+  background: var(--surface-sunken);
+  color: var(--text-primary);
+  font-family: var(--font-sans, Inter, system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: -0.15px;
+  text-wrap: pretty;
+}
+* { box-sizing: border-box; }
+h1, h2, h3 { margin: 0; font-size: 24px; font-weight: 500; line-height: 1.25; }
+p { margin: 0; }
+a { color: var(--text-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+
+.shell { width: min(100% - 40px, var(--shell)); margin: 0 auto; }
+.eyebrow { font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary); }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.card { background: var(--surface-card); border: 1px solid var(--border-subtle); border-radius: 16px; }
+.muted { color: var(--text-secondary); }
+.tiny { font-size: 12px; color: var(--text-tertiary); }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ---- Dark theme ----
+   Semantic aliases only. Surfaces go to true black and structure is carried by the separators; the
+   accent and semantic hues are lifted for contrast. No new hue families. */
+:root[data-theme="dark"] {
+  --text-primary:#EDEDED; --text-secondary:#A8A8A8; --text-tertiary:#7A7A7A;
+  --text-inverse:#1A1A1A; --text-accent:#7BA4F9; --text-disabled:#5A5A5A;
+
+  --surface-page:#000; --surface-card:#000; --surface-sunken:#000;
+  --surface-hover:#101010; --surface-active:#181818; --surface-inverse:#F4F4F4;
+
+  --border-subtle:#242424; --border-default:#333333; --border-strong:#454545;
+  --border-focus:#5B8DF7;
+
+  --accent:#5B8DF7; --accent-hover:#8FB2FA; --accent-active:#B9CDFC; --accent-soft:#111C31;
+  --success:#74C795; --success-soft:#0C1A11; --green-600:#8FD6A9;
+  --warning:#E3AE4E; --warning-soft:#1D1608; --amber-600:#EFC677;
+  --danger:#EC7A7A; --danger-soft:#200F0F;
+  --ring:0 0 0 3px #111C31;
+  --gray-600:#D9D9D9; /* keeps the ink CTA hover legible when inverted */
+  color-scheme: dark;
+}
+:root[data-theme="dark"] body { background: var(--surface-sunken); }

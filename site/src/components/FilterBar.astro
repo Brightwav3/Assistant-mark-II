@@ -1,0 +1,96 @@
+---
+interface Props {
+  groups: { key: "mark" | "area" | "status"; label: string; values: string[] }[];
+}
+const { groups } = Astro.props;
+---
+
+<div class="card bar" id="filter-bar">
+  <label class="search">
+    <span aria-hidden="true">⌕</span>
+    <input type="search" id="filter-q" placeholder="Search titles and summaries" autocomplete="off" />
+  </label>
+
+  {groups.map((g) => (
+    <div class="group">
+      <span class="eyebrow key">{g.label}</span>
+      <div class="chips" data-key={g.key}>
+        <button class="chip on" data-value="All" type="button">All</button>
+        {g.values.map((v) => (
+          <button class="chip" data-value={v} type="button">
+            {g.key === "mark" ? "Mark " + v : v}
+          </button>
+        ))}
+      </div>
+    </div>
+  ))}
+
+  <div class="foot">
+    <span class="tiny" id="filter-count"></span>
+    <button class="reset tiny" id="filter-reset" type="button" hidden>Clear filters</button>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const bar = document.getElementById("filter-bar");
+    const list = document.getElementById("log-list");
+    if (!bar || !list) return;
+    const rows = [...list.querySelectorAll(".row")];
+    const empty = list.querySelector(".empty");
+    const count = document.getElementById("filter-count");
+    const reset = document.getElementById("filter-reset");
+    const q = document.getElementById("filter-q");
+    const state = { mark: "All", area: "All", status: "All", q: "" };
+
+    function apply() {
+      let shown = 0;
+      for (const row of rows) {
+        const ok =
+          (state.mark === "All" || row.dataset.mark === state.mark) &&
+          (state.area === "All" || row.dataset.area === state.area) &&
+          (state.status === "All" || row.dataset.status === state.status) &&
+          (!state.q || row.dataset.text.includes(state.q));
+        row.hidden = !ok;
+        if (ok) shown++;
+      }
+      empty.hidden = shown > 0;
+      count.textContent = shown + " of " + rows.length + " shown";
+      reset.hidden = state.mark === "All" && state.area === "All" && state.status === "All" && !state.q;
+    }
+
+    bar.querySelectorAll(".chips").forEach((group) => {
+      group.addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".chip");
+        if (!btn) return;
+        group.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c === btn));
+        state[group.dataset.key] = btn.dataset.value;
+        apply();
+      });
+    });
+    q.addEventListener("input", () => { state.q = q.value.trim().toLowerCase(); apply(); });
+    reset.addEventListener("click", () => {
+      state.mark = state.area = state.status = "All";
+      state.q = "";
+      q.value = "";
+      bar.querySelectorAll(".chips").forEach((g) => g.querySelectorAll(".chip").forEach((c, i) => c.classList.toggle("on", i === 0)));
+      apply();
+    });
+    apply();
+  })();
+</script>
+
+<style>
+  .bar{padding:16px}
+  .search{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--border-default);color:var(--text-tertiary)}
+  .search:focus-within{box-shadow:inset 0 0 0 1px var(--border-focus),var(--ring)}
+  .search input{flex:1;border:0;outline:0;background:transparent;font:inherit;font-size:14px;letter-spacing:-.15px;color:var(--text-primary)}
+  .group{display:flex;align-items:baseline;gap:12px;margin-top:16px;flex-wrap:wrap}
+  .key{width:56px;flex:none}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{padding:4px 10px;border:0;border-radius:4px;font:inherit;font-size:12px;font-weight:500;letter-spacing:-.15px;cursor:pointer;color:var(--text-secondary);background:var(--surface-card);box-shadow:inset 0 0 0 1px var(--border-default);transition:background 150ms cubic-bezier(.22,1,.36,1),color 150ms}
+  .chip:hover{background:var(--surface-hover)}
+  .chip.on{color:var(--accent-hover);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+  .foot{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:16px}
+  .reset{border:0;background:none;padding:0;font:inherit;font-size:12px;color:var(--text-accent);cursor:pointer}
+</style>

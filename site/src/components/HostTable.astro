@@ -1,0 +1,27 @@
+---
+import StatusPill from "./StatusPill.astro";
+import { hosts } from "../data/site";
+---
+
+<section class="shell wrap">
+  <p class="eyebrow">Host platform support</p>
+  <div class="card list">
+    {hosts.map((h) => (
+      <div class="row">
+        <span class="h">{h.host}</span>
+        <span><StatusPill status={h.status} /></span>
+        <span class="tiny">{h.note}</span>
+      </div>
+    ))}
+  </div>
+  <p class="tiny note">No macOS or Linux hardware has been exercised. The cross-platform CI leg is a non-blocking typecheck only and proves nothing about audio behaviour.</p>
+</section>
+
+<style>
+  .wrap{padding-top:32px}
+  .list{margin-top:12px;overflow:hidden}
+  .row{display:grid;grid-template-columns:180px 120px 1fr;gap:16px;align-items:center;padding:12px 16px;font-size:13px}
+  .row + .row{border-top:1px solid var(--border-subtle)}
+  .note{margin-top:12px;max-width:var(--measure)}
+  @media (max-width:760px){.row{grid-template-columns:1fr auto}.row .tiny{grid-column:1/-1}}
+</style>
