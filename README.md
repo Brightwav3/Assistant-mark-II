@@ -4,11 +4,6 @@
 [![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial-4c1d91)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Architecture: git submodules](https://img.shields.io/badge/Architecture-git%20submodules-6f42c1)](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
-[**Project site → brightwav3.github.io/Assistant-mark-II**](https://brightwav3.github.io/Assistant-mark-II/)
-
-The public project site is an Astro source project in [`site/`](./site). A GitHub Actions workflow
-builds it and deploys the static output to GitHub Pages.
-
 Infrastructure for an intelligent, capable, model-independent personal assistant.
 
 M.A.R.K. II is a new generation of the assistant, continuing from the completed

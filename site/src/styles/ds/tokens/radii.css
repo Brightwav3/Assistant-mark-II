@@ -1,7 +1,0 @@
-/* Fidelio — Corner radii. Three intentional values, plus a tight 4px for chips/tags. */
-:root {
-  --radius-xs:   4px;    /* chips, tags, small tiles */
-  --radius-nav:  8px;    /* navigation, inputs, menus */
-  --radius-card: 16px;   /* cards, sheets, dialogs */
-  --radius-pill: 9999px; /* CTA buttons and toggles */
-}
