@@ -7,3 +7,8 @@ dist/
 README AGENTS.md
 docs/superpowers/
 manifesto/
+
+# Working notes for the humans and agents on this machine, not project history.
+# Child repositories keep their own committed HANDOFF.md; these are the root's scratch.
+/CHANGELOG.md
+/HANDOFF.md
