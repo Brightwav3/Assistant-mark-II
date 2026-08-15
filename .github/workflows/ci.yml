@@ -8,7 +8,26 @@ on:
 
 # Proves the pinned combination of cores builds and composes together.
 jobs:
+  # The harness-independent gate. Claude Code has a Stop hook and Codex has no
+  # equivalent, so neither can be the layer that holds this. Runs first and is
+  # cheap: no submodule build, no ffmpeg, no install.
+  documentation-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify documentation structure
+        run: npm test
+
   integration:
+    # Gated on the cheap check, not merely listed after it — jobs run in parallel
+    # unless something says otherwise. A structure failure now costs seconds
+    # instead of a full Windows build with an ffmpeg install and every submodule.
+    needs: documentation-structure
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -39,6 +58,7 @@ jobs:
   # The composed runtime remains covered by the Windows integration job because
   # its relative speech packages include native capture dependencies.
   portability-typecheck:
+    needs: documentation-structure
     continue-on-error: true
     strategy:
       fail-fast: false
