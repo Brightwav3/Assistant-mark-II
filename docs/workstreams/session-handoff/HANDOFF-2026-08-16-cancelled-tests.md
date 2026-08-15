@@ -2,8 +2,53 @@
 
 **Date:** 2026-08-16
 **Branch:** `docs/decision-records` (all 13 repositories)
-**Blocking:** [Assistant-mark-II#12](https://github.com/Brightwav3/Assistant-mark-II/pull/12) `integration`
-**Not blocking:** documentation work — that is green everywhere
+**Status: RESOLVED.** Fixed in `87bbf80`. Kept as the record of how it was found,
+because two plausible explanations were wrong and the negative results are what
+pointed at the real one.
+
+---
+
+## Resolution
+
+**Both handoff deadlines were `unref`'d.**
+
+```ts
+timer = setTimeout(() => reject(new Error("HANDOFF_READY_TIMEOUT")), ms);
+timer.unref?.();                                    // coordinator.ts
+```
+```ts
+const timer = setTimeout(() => finish(false), timeoutMs);
+timer.unref?.();                                    // idle-gate.ts
+```
+
+An unref'd timer must not keep the event loop alive. So when the runtime is
+waiting on **nothing but the deadline** the loop drains, the timer never fires,
+and the promise it would settle stays pending forever.
+
+That is exactly the case each deadline exists for — a replacement that never
+becomes ready, a session that never goes idle. **A stalled handoff hung instead of
+aborting**, which is the opposite of what a timeout is for. In a live session it
+would be an assistant that stops mid-handoff and never recovers.
+
+Removing `unref` is safe: `withTimeout` clears in `finally` on every path and
+`waitForIdle` clears in `finish` on both, so neither timer can outlive the attempt
+it bounds.
+
+| | Node 22.23.2 | Node 24.14.1 |
+| --- | --- | --- |
+| before | 244 pass / **22 cancelled** | 267 / 0 |
+| after | **267 / 0** | **267 / 0** |
+
+**Why only CI saw it.** Node 24 keeps the loop alive long enough that the timer
+still fires; Node 22 does not. CI pins 22, development runs 24, `engines` says
+`>=22`. The defect was real on a supported version the whole time — nobody had
+ever run the suite on 22.
+
+**Why both earlier hypotheses failed, in hindsight.** Raising the budget could not
+help because the timer never fired at all: fifty milliseconds and ten seconds are
+the same when nothing is waiting. Serial execution could not help because it was
+never contention. Both negative results were correctly pointing at something
+structural.
 
 ---
 
@@ -152,22 +197,32 @@ If that is right, the code has a real defect — an abort path that leaves a pro
 unsettled — which Node 24 happens to tolerate and Node 22 does not. **The bug is in
 the coordinator, not in the runner.** CI is telling the truth.
 
-## Next steps, in order
+## How it was found — the step that mattered
 
-Both timing explanations are closed. What is left is the code.
+Reproducing locally on the CI's Node version. Everything before that was
+inference; this closed the loop in one run:
 
-1. **Reproduce on Node 22 locally.** This is the whole ballgame — everything else
-   is guessing until it reproduces.
-   ```bash
-   nvm install 22 && nvm use 22
-   cd assistant-runtime && npm ci && npm test
-   ```
-   Expected: the same 22 cancelled. If so, the loop is closed and it is debuggable
-   at a breakpoint. If it passes on Node 22 too, the difference is the runner's
-   platform or CPU count, and the next probe is `--test-reporter=spec` on CI to see
-   how far each cancelled test gets before it stops.
+```bash
+winget install Schniz.fnm
+fnm install 22
+<node22> --import tsx --test tests/handoff-lifecycle.test.ts
+```
 
-2. **Find the unsettled promise.** Start in `src/handoff/coordinator.ts` on the
+Result: 3 pass, 8 cancelled — matching CI's 8-of-11 for that file exactly. From
+there it was a breakpoint's worth of work: tests 1–3 passed and 4 hung, so
+everything after it was cancelled by the parent. Test 4 is
+*"a replacement that never becomes ready cannot be committed"* — a test whose whole
+job is to wait for the deadline.
+
+**Lesson worth keeping: test on the Node version CI pins.** The gap between
+`engines: >=22`, a runner on 22, and a developer on 24 hid a real defect for the
+life of the feature.
+
+## What was tried before, for the record
+
+1. ~~Reproduce on Node 22 locally.~~ **Done — this is what solved it.**
+
+2. ~~**Find the unsettled promise.**~~ Start in `src/handoff/coordinator.ts` on the
    abort path, then `src/handoff/idle-gate.ts` (`waitForIdle`) — five of the
    idle-cutover tests are cancelled and its own deadline test is among them. Look
    for a promise created for a deadline that is never resolved or rejected when the
@@ -187,11 +242,11 @@ The documentation work is independent and green:
 - No source behaviour changed anywhere — comments and Markdown only, plus the two
   test commits described above
 
-## Related, separate problem
+## Related, separate problem — resolved, but the design issue stands
 
 [assistant-runtime#7](https://github.com/Brightwav3/assistant-runtime/pull/7)
-`verify` fails for an unrelated reason: its workflow checks siblings out from their
-**default branch**, and features it already depends on live in commits that were
+`verify` failed for an unrelated reason: its workflow checks siblings out from their
+**default branch**, and features it already depends on lived in commits that were
 never pushed to those siblings' `main` (`EpisodeUncertainPart`,
 `RealtimeCore.open/activate/close`). Merging memory-core#2 and
 Jarvis-speech-system#6 fixes it. Detail is in a comment on that PR.
@@ -204,10 +259,11 @@ sound.
 
 | Commit | | |
 | --- | --- | --- |
-| `6a230de` | derive the trace stamp instead of hard-coding one timezone | **genuine fix, kept** |
+| `6a230de` | derive the trace stamp instead of hard-coding one timezone | genuine fix, kept |
 | `ff1b8e1` | raise the wall-clock budgets 10× | no effect, reverted |
 | `6299b7d` | run the suite serially as a probe | no effect, reverted |
 | `4d583cb` | revert the two disproved timing hypotheses | — |
+| `87bbf80` | **stop unref'ing the deadlines that bound a stuck handoff** | **the fix** |
 
-The branch now carries one behavioural change to this repository: the timezone fix.
-Everything else is comments and Markdown.
+Two behavioural changes to this repository survive: the timezone fix and the
+deadline fix. Everything else on the branch is comments and Markdown.
