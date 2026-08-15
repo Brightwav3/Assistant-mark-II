@@ -86,19 +86,9 @@ be able to recognize when a task needs deeper reasoning, a deterministic tool,
 a long-running operation, or another agent, and delegate that work while
 continuing to manage the user interaction.
 
-```text
-                         Voice Model
-                              │
-                 ┌────────────┴────────────┐
-                 │                         │
-            Conversation              Delegation
-                                           │
-                                  Intelligence Core
-                                           │
-                         ┌─────────────────┼─────────────────┐
-                         │                 │                 │
-                       Tools            Reasoner           Agents
-```
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Brightwav3/Assistant-mark-II/bd52eac030e269edb65de76c050f501425a02f49/docs/images/voice-intelligence-delegation.png" width="760" alt="Voice model conversation and delegation architecture" />
+</p>
 
 M.A.R.K. II remains half-duplex. It extracts the maximum useful capability from
 the current conversational model paradigm while keeping the platform ready for
@@ -137,21 +127,13 @@ The first of those priorities is done and hardware-verified. A voice session can
 hand deeper work to a separately configured reasoning model, keep talking to the
 user while it runs, and speak the result when it arrives.
 
-```text
-User speaks (Czech)
-    ↓
-Gemini Live                          intelligence_delegate — the only tool it has
-    ↓ accepted immediately, no result
-Delegation Broker                    mints the execution, owns limits and cancellation
-    ↓
-Intelligence Core                    a separately configured text model
-    ↓
-Tool System → Memory Core            memory_search, memory_view — bounded, read-only
-    ↓ delegation.result.v1
-Delivery Scheduler                   interrupt / when_idle / silent
-    ↓
-the same voice session               labelled source=delegation, never a user transcript
-```
+##### Delegation architecture
+
+![Delegated voice intelligence](./docs/images/delegation-architecture.png)
+
+##### Delegation timeline
+
+![Delegation timeline](./docs/images/delegation-timeline.png)
 
 Verified on hardware, 2026-08-14, Gemini Live 3.1 voice with a
 `gemini-3.5-flash-lite` delegation model:
