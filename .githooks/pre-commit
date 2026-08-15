@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# Documentation structure gate.
+#
+# This is the harness-independent layer. Claude Code has a Stop hook, Codex has
+# nothing equivalent, and neither covers a commit you make by hand — so the check
+# lives where all three pass through.
+#
+# Enabled by:  git config core.hooksPath .githooks
+# Bypassed by: git commit --no-verify   (deliberate escape hatch, not a default)
+#
+# See docs/superpowers/specs/2026-08-15-decision-documentation-system-design.md
+
+set -e
+
+REPO="$(git rev-parse --show-toplevel)"
+
+# Only meaningful in the meta-repository. A submodule commit runs its own hooks.
+[ -f "$REPO/tests/structure.test.mjs" ] || exit 0
+
+command -v node >/dev/null 2>&1 || {
+  echo "pre-commit: node not found; skipping the documentation structure check." >&2
+  exit 0
+}
+
+if node --test "$REPO"/tests/*.test.mjs >/tmp/structure-gate.$$ 2>&1; then
+  rm -f /tmp/structure-gate.$$
+  exit 0
+fi
+
+echo ""
+echo "  Commit refused: the documentation structure test is failing."
+echo ""
+grep -E '^(✖|  AssertionError)' /tmp/structure-gate.$$ \
+  | grep -v '^✖ failing tests' \
+  | sed 's/ ([0-9.]*ms)$//' \
+  | awk '!seen[$0]++' \
+  | head -20
+echo ""
+echo "  Full output:  npm test"
+echo ""
+echo "  Common causes:"
+echo "    - CLAUDE.md edited without copying to AGENTS.md (or the reverse)"
+echo "    - a new ADR missing one of its six required sections"
+echo "    - a file named under an ADR's 'Enforced in' with no comment naming that ADR"
+echo "    - an invariant quoted with different wording than INVARIANTS.md"
+echo ""
+echo "  If this is deliberate:  git commit --no-verify"
+echo ""
+
+rm -f /tmp/structure-gate.$$
+exit 1

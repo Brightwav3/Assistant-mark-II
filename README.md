@@ -17,6 +17,25 @@ This repository is the active development line after the completed
 [Assistant M.A.R.K. I](https://github.com/Brightwav3/Assistant-mark-I) proof of
 concept.
 
+## Where things are written
+
+| You want | Read |
+| --- | --- |
+| Rules an agent must follow here | [`CLAUDE.md`](CLAUDE.md) / [`AGENTS.md`](AGENTS.md) — and each repository's own |
+| Rules that cross repository boundaries | [`INVARIANTS.md`](INVARIANTS.md) |
+| Why a cross-repository boundary exists | [`docs/decisions/`](docs/decisions/README.md) |
+| Why one repository is shaped as it is | `<repo>/docs/decisions/` |
+| What is being built right now | [`docs/workstreams/`](docs/workstreams/README.md) |
+| What the whole system is for | [`manifesto/`](manifesto/README.md) |
+| The full architectural narrative | [`README AGENTS.md`](README%20AGENTS.md) |
+| Long-form reconstruction, for a human | [`docs/deep/`](docs/deep/README.md) |
+| The last session's state | [`HANDOFF.md`](HANDOFF.md) |
+
+Every repository carries the same document skeleton: `CLAUDE.md`, `AGENTS.md`
+(byte-identical), `README.md`, `ARCHITECTURE.md` (shape only), `WORKPLAN.md`,
+`PROGRESS.md`, `ISSUES.md`, and `docs/decisions/`. A structure test in this
+repository asserts it — run `npm test` here.
+
 ---
 
 ## The M.A.R.K. progression
