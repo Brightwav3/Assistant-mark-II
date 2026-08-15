@@ -16,24 +16,108 @@ Evidence scale, as elsewhere in this project:
 
 ## Where this stands
 
-All seven milestones are implemented and verified offline. Milestone 1 is fully
+All eight milestones are implemented and verified offline. Milestone 1 is fully
 VERIFIED, including a documented recovery procedure that was executed rather than
-described. Milestones 2–7 are PARTIAL: every failure path is proven against the
+described. Milestones 2–8 are PARTIAL: every failure path is proven against the
 fake provider, and nothing has run against a live one.
 
-Two things remain, both stated in full under Milestone 7: the assembly is not yet
-attached to the live realtime path, and the three Definition-of-Done items that
-need hardware — no audible gap, measured prepare and overlap latency, and echo
-cancellation across a real cutover — are still UNVERIFIED.
+The assembly is now attached to the live realtime path (Milestone 8), so the
+smoke test is runnable for the first time. It has not been run. The three
+Definition-of-Done items that need hardware — no audible gap, measured prepare
+and overlap latency, and echo cancellation across a real cutover — are still
+UNVERIFIED, and no amount of offline coverage will change that.
 
 ```text
 memory-core                   59 tests
-assistant-runtime            233 tests
+assistant-runtime            241 tests
 speech-system/realtime core   50 tests
 intelligence-core             94 tests
 state-core                    16 tests   (no source changes)
 aec-system                    42 tests   (no source changes)
 ```
+
+---
+
+## Milestone 8 — Live wiring — 2026-08-15 — PARTIAL
+
+Repository: `assistant-runtime` alone, branch `feat/handoff-wiring`. No other
+core changed. `handoff.enabled` still defaults to `false`.
+
+Milestone 7 shipped a complete, tested mechanism with no wire running into it:
+`createHandoffComposition` existed and was never called, and the estimator had no
+connection to the realtime event stream, so it would have read zero tokens
+forever. This milestone is that wire.
+
+### Added
+
+- Multi-session support in `RealtimeCoreAdapter`: `openReplacement()`,
+  `prefillSession()`, `activateSession()`, `closeSession()`, `activeSessionId()`.
+  Every open session runs its own event pump from the moment it exists, so a
+  replacement is not deaf to what the provider says about the context it was
+  prefilled with.
+- `RollingTranscript` (`src/handoff/transcript.ts`) — the conversation held by
+  the runtime, bounded, reporting how many turns it dropped. Reseeded from the
+  compacted summary via the new `HandoffCompositionOptions.onCompacted`, so a
+  second handoff summarizes the first summary rather than losing it.
+- `createRealtimeHandoffController` (`src/handoff/realtime-controller.ts`) — the
+  whole translation between `HandoffSessionController` and the live adapter.
+- `RealtimeSessionKind` (`"interaction" | "handoff"`) on the `onSession`
+  subscription, so a consumer can tell a new conversation from a continued one.
+- `tests/handoff-wiring.test.ts` — 8 cases against the real adapter and the real
+  multi-session Realtime Core. Audio ownership is proven by sending frames and
+  reading the provider's per-session counters, never by reading a variable the
+  code under test also wrote.
+
+### Changed
+
+- **Delegation delivery is keyed to a logical session id, not to the physical
+  session rendering it.** This is the change everything else waited on: after a
+  commit `session.id` is a different string, and every delegation queued against
+  the old one would be stranded at the moment its answer is due.
+- `composition.ts` builds a handoff assembly per interaction, feeds the estimator
+  from the realtime trace stream (transcripts *and* audio duration, both
+  directions), drives the idle gate from user speech, and calls `maybePrepare()`
+  after each recorded turn, starting `run()` without awaiting it.
+- Echo rebinding points at the real `EchoGuard`. `activateSession` deliberately
+  does not touch echo, so the handoff's rebinder remains the only thing that does.
+- A session ending only tears down shared capture state if it was the session
+  that owned audio. Previously any session's close cleared it — harmless with one
+  session, and with two it would let a failing replacement silence the one still
+  talking to the user.
+
+### Where the plan was wrong
+
+- **`HANDOFF.md` said the wiring was "one call plus the delivery rebinding".** It
+  was not. `RealtimeCoreAdapter` was single-session throughout: one `active`
+  field, one event pump, a greeting on every open. Realtime Core's multi-session
+  API had been there since Milestone 6, but nothing in the runtime could reach
+  it. The adapter work was the larger half of this milestone.
+- **Extracting config-building into an async helper changed observable timing.**
+  It deferred `core.connect` by one microtask, and capture arriving in that
+  window found neither an open session nor one being opened.
+  `tests/audio-routing.test.ts` caught it as a hang. `buildConfig` now returns
+  synchronously when there is nothing to resolve. Worth recording because the
+  refactor looked purely mechanical and was not.
+- **Two existing tests stub `RealtimeCore` with only `connect`/`capabilities`/
+  `health`.** Teardown now asks Realtime Core to forget the session and falls
+  back to closing the session directly, which is the behaviour that actually
+  matters: the transport must end either way.
+
+### Left undone, deliberately
+
+- `handoff.enabled` stays `false`. Turning it on is a hardware decision.
+- The delivery-rebinding change is on the live path whether handoff is enabled or
+  not, so the baseline hardware and delegated-voice smoke tests are owed before
+  handoff is enabled at all. Recorded as prerequisite zero in the smoke test.
+
+### Evidence
+
+`assistant-runtime` — 241 tests, 0 failures; `npm run verify` (typecheck, tests,
+build) clean. Every test file was additionally run in isolation with a hard
+timeout, which is how the `audio-routing` hang above was found rather than
+averaged away in a parallel run.
+
+Nothing here has touched hardware. PARTIAL.
 
 ---
 
