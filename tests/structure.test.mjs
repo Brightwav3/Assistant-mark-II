@@ -77,7 +77,21 @@ function findUnits() {
 
 const UNITS = findUnits();
 const name = (unit) => relative(ROOT, unit) || ".";
-const read = (p) => readFileSync(p, "utf8");
+
+/** Exact bytes. Only the instruction-pair comparison wants this. */
+const readRaw = (p) => readFileSync(p, "utf8");
+
+/**
+ * Content with line endings normalised.
+ *
+ * Everything here that parses Markdown must go through this. In a JavaScript
+ * regular expression `\r` is a line terminator, so `.` does not match it — and a
+ * pattern like /^>.*(?:\n>.*)*\/m silently captures only the first line of a
+ * blockquote in a CRLF checkout. That is not hypothetical: with core.autocrlf on,
+ * a fresh clone on Windows turned a four-line invariant into a 77-character
+ * fragment and the citation checks failed against documentation that was correct.
+ */
+const read = (p) => readFileSync(p, "utf8").replace(/\r\n/g, "\n");
 
 /** Blockquote text, normalised for comparison: markers stripped, whitespace collapsed. */
 function quoteText(block) {
@@ -125,9 +139,11 @@ test("CLAUDE.md and AGENTS.md exist and are byte-identical in every unit", () =>
     const claude = join(unit, "CLAUDE.md");
     const agents = join(unit, "AGENTS.md");
     assert.ok(existsSync(agents), `${name(unit)}: AGENTS.md missing — Codex reads that one, not CLAUDE.md`);
+    // Byte-exact on purpose: this is the one check that must not normalise, because
+    // a pair that differs only in line endings is still a pair that will drift.
     assert.equal(
-      read(claude),
-      read(agents),
+      readRaw(claude),
+      readRaw(agents),
       `${name(unit)}: CLAUDE.md and AGENTS.md differ. Both files look present while one lies; ` +
         `that is worse than one being absent.`,
     );
