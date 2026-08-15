@@ -137,11 +137,13 @@ The first of those priorities is done and hardware-verified. A voice session can
 hand deeper work to a separately configured reasoning model, keep talking to the
 user while it runs, and speak the result when it arrives.
 
-## Delegated voice intelligence 
-![Delegated voice intelligence](Delegation Architecture.png)
+##### Delegation architecture
 
-## Delegation Timeline
-![Delegation Timeline](Delegation Timeline.png)
+![Delegated voice intelligence](./docs/images/delegation-architecture.png)
+
+##### Delegation timeline
+
+![Delegation timeline](./docs/images/delegation-timeline.png)
 
 Verified on hardware, 2026-08-14, Gemini Live 3.1 voice with a
 `gemini-3.5-flash-lite` delegation model:
