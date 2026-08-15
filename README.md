@@ -87,7 +87,7 @@ a long-running operation, or another agent, and delegate that work while
 continuing to manage the user interaction.
 
 <p align="center">
-  <img src="./docs/images/voice-intelligence-delegation.png" width="760" alt="Voice model conversation and delegation architecture" />
+  <img src="https://raw.githubusercontent.com/Brightwav3/Assistant-mark-II/main/docs/images/voice-intelligence-delegation.png" width="760" alt="Voice model conversation and delegation architecture" />
 </p>
 
 M.A.R.K. II remains half-duplex. It extracts the maximum useful capability from
