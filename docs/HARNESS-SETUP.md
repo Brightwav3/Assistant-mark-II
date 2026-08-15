@@ -36,7 +36,7 @@ dependencies and no install step.
 `CLAUDE.md` and `AGENTS.md` are **byte-identical** in all sixteen units. The
 structure test compares them, so a change to one without the other fails the
 commit. This duplication is deliberate — see the *Rule 3* discussion in
-[the design spec](superpowers/specs/2026-08-15-decision-documentation-system-design.md).
+[the design spec](design/2026-08-15-decision-documentation-system.md).
 
 Neither file references a Claude Code skill. Everything an agent needs — the six
 triggers for writing a decision record, the placement rules, the template — lives

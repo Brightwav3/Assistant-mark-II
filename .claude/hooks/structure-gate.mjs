@@ -9,7 +9,7 @@
  *
  * Deliberately Claude-Code-only. Codex never fires hooks, which is exactly why
  * the test itself must stay the foundation and this must stay a convenience.
- * See docs/superpowers/specs/2026-08-15-decision-documentation-system-design.md.
+ * See docs/design/2026-08-15-decision-documentation-system.md.
  *
  * Written in Node rather than shell so it behaves identically on Windows without
  * depending on which shell the harness picked.

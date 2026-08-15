@@ -9,7 +9,7 @@
 # Enabled by:  git config core.hooksPath .githooks
 # Bypassed by: git commit --no-verify   (deliberate escape hatch, not a default)
 #
-# See docs/superpowers/specs/2026-08-15-decision-documentation-system-design.md
+# See docs/design/2026-08-15-decision-documentation-system.md
 
 set -e
 

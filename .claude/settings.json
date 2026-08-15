@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"C:/Users/Sajmon/Jarvis/.claude/hooks/structure-gate.mjs\"",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/structure-gate.mjs\"",
             "timeout": 60,
             "statusMessage": "Checking documentation structure"
           }
