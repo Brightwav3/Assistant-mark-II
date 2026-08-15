@@ -137,21 +137,11 @@ The first of those priorities is done and hardware-verified. A voice session can
 hand deeper work to a separately configured reasoning model, keep talking to the
 user while it runs, and speak the result when it arrives.
 
-```text
-User speaks (Czech)
-    ↓
-Gemini Live                          intelligence_delegate — the only tool it has
-    ↓ accepted immediately, no result
-Delegation Broker                    mints the execution, owns limits and cancellation
-    ↓
-Intelligence Core                    a separately configured text model
-    ↓
-Tool System → Memory Core            memory_search, memory_view — bounded, read-only
-    ↓ delegation.result.v1
-Delivery Scheduler                   interrupt / when_idle / silent
-    ↓
-the same voice session               labelled source=delegation, never a user transcript
-```
+## Delegated voice intelligence 
+![Delegated voice intelligence](Delegation Architecture.png)
+
+## Delegation Timeline
+![Delegation Timeline](Delegation Timeline.png)
 
 Verified on hardware, 2026-08-14, Gemini Live 3.1 voice with a
 `gemini-3.5-flash-lite` delegation model:
