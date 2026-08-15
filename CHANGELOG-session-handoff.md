@@ -38,6 +38,62 @@ aec-system                    42 tests   (no source changes)
 
 ---
 
+## Milestone 9 — The conversation outlives the session — 2026-08-15 — PARTIAL
+
+Repository: `assistant-runtime` alone. Found while scripting the hardware test,
+which is the only reason it was found before a user hit it.
+
+Wiring the handoff in exposed a defect nobody had written down: an episode was
+keyed to the **provider session**, so a handoff closed it and ran memory
+extraction over half a conversation. Extraction forms durable beliefs. A belief
+formed at the halfway point is formed before the user has finished saying what
+they meant — *"mám rád motorky"* becomes a stored fact, and *"malé, a loni jsem
+ji prodal"* lands in a different episode.
+
+### Changed
+
+- **An episode is the conversation, not the session rendering it.**
+  `EpisodeMemoryWriter` takes a `resolveConversationId`, and the runtime resolves
+  every provider session to the logical session id. One conversation, one
+  episode, one extraction, at the end.
+- A replaced session is declared superseded at activation, before its
+  `session.closed` can arrive. That close is the handoff working, not the
+  conversation ending, and is traced as `memory.episode.kept_open`. Any output
+  still in flight is completed as interrupted, because the session carrying it
+  is gone.
+- A close that is *not* a handoff still ends the conversation. The distinction is
+  explicit rather than inferred from timing.
+
+### Added
+
+- **`conversation_recall`** (`src/delegation/episode-tools.ts`) — the turns of the
+  conversation in progress, readable by the delegated text model. Scoped to the
+  live logical session by the runtime; the model never names a session id, so
+  there is no id space for it to probe. Diacritics are folded, because a Czech
+  query typed without them must still match what was said. Turns are returned as
+  tainted evidence, never as instruction, and carry their `unreliable`
+  transcript marker so an uncertain transcript is not quoted back as verbatim.
+- A line in the delegated model's brief telling it to reach for
+  `conversation_recall` when the user refers to the current conversation.
+  Without it the model searches semantic memory, finds nothing, and reports that
+  nothing was said — false, and authoritative-sounding.
+- `tests/handoff-episode-continuity.test.ts` — 5 cases.
+
+### Why both halves had to ship together
+
+Keying episodes to the conversation, on its own, is a regression. Until
+extraction runs there are no memories of the current conversation, so the
+delegated model would have had *nothing* to answer from — where previously the
+premature extraction at the cutover accidentally gave it something. The lookup
+had to replace the accident in the same change.
+
+### Evidence
+
+`assistant-runtime` — 246 tests, 0 failures; `npm run verify` clean; every file
+also run in isolation with a hard timeout. Nothing has touched hardware. PARTIAL.
+
+---
+
 ## Milestone 8 — Live wiring — 2026-08-15 — PARTIAL
 
 Repository: `assistant-runtime` alone, branch `feat/handoff-wiring`. No other
