@@ -110,15 +110,29 @@ Note `handoff-observability.test.ts` keeps `readyTimeoutMs: 50` deliberately —
 exists to watch a deadline fire — and it is the *worst* affected at 5 of 6. Which
 fits: the tests that make a deadline fire are the tests that break.
 
+### Not concurrency either — also tried, also did nothing
+
+The agreed fallback ran the suite serially with `--test-concurrency=1`. The flag is
+confirmed present in the CI log, and the composed-runtime step went from about 17s
+to 35s, so it genuinely ran one file at a time.
+
+**Result: identical. Same 22 tests, same count, same error.**
+
+Cross-file interference is eliminated. Both timing hypotheses are now dead, and
+both changes are reverted in `4d583cb` — a change that fixes nothing but looks like
+a fix is worse than no change, because the next reader takes a ten-second budget
+and a serial runner for decisions somebody made on purpose.
+
 ### Not flake
 
-Three runs, identical set:
+Four runs, identical set:
 
-| Run | fail | cancelled |
-| --- | --- | --- |
-| 31909331776 | 1 (trace) | 22 |
-| 31909873397 | 0 | 22 |
-| 31911182679 | 0 | 22 |
+| Run | fail | cancelled | what changed |
+| --- | --- | --- | --- |
+| 31909331776 | 1 (trace) | 22 | baseline |
+| 31909873397 | 0 | 22 | after the timezone fix |
+| 31911182679 | 0 | 22 | budgets raised 10× |
+| 31911595957 | 0 | 22 | serial, `--test-concurrency=1` |
 
 ## The leading hypothesis
 
@@ -140,6 +154,8 @@ the coordinator, not in the runner.** CI is telling the truth.
 
 ## Next steps, in order
 
+Both timing explanations are closed. What is left is the code.
+
 1. **Reproduce on Node 22 locally.** This is the whole ballgame — everything else
    is guessing until it reproduces.
    ```bash
@@ -147,13 +163,11 @@ the coordinator, not in the runner.** CI is telling the truth.
    cd assistant-runtime && npm ci && npm test
    ```
    Expected: the same 22 cancelled. If so, the loop is closed and it is debuggable
-   at a breakpoint.
+   at a breakpoint. If it passes on Node 22 too, the difference is the runner's
+   platform or CPU count, and the next probe is `--test-reporter=spec` on CI to see
+   how far each cancelled test gets before it stops.
 
-2. **If it does not reproduce on Node 22**, run the suite on CI with
-   `--test-concurrency=1` to eliminate cross-file interference. This was the agreed
-   fallback ("B") and is one extra run.
-
-3. **Find the unsettled promise.** Start in `src/handoff/coordinator.ts` on the
+2. **Find the unsettled promise.** Start in `src/handoff/coordinator.ts` on the
    abort path, then `src/handoff/idle-gate.ts` (`waitForIdle`) — five of the
    idle-cutover tests are cancelled and its own deadline test is among them. Look
    for a promise created for a deadline that is never resolved or rejected when the
@@ -188,11 +202,12 @@ sound.
 
 ## Commits on this branch relevant to the above
 
-| | |
-| --- | --- |
-| `6a230de` | fix(test): derive the trace stamp instead of hard-coding one timezone |
-| `ff1b8e1` | test(handoff): give the wall-clock budgets room for a loaded runner — **no effect, consider reverting** |
+| Commit | | |
+| --- | --- | --- |
+| `6a230de` | derive the trace stamp instead of hard-coding one timezone | **genuine fix, kept** |
+| `ff1b8e1` | raise the wall-clock budgets 10× | no effect, reverted |
+| `6299b7d` | run the suite serially as a probe | no effect, reverted |
+| `4d583cb` | revert the two disproved timing hypotheses | — |
 
-`ff1b8e1` is harmless but it now documents a hypothesis that was disproved. Either
-revert it or keep it for the 20s figure `handoff-trigger` already treats as
-realistic — but do not leave anyone thinking it fixed something.
+The branch now carries one behavioural change to this repository: the timezone fix.
+Everything else is comments and Markdown.
