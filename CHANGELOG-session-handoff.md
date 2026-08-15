@@ -38,6 +38,90 @@ aec-system                    42 tests   (no source changes)
 
 ---
 
+## Milestone 10 — Host tools behind one boundary — 2026-08-15 — PARTIAL
+
+Repositories: `assistant-runtime`, `memory-core`, `intelligence-core`.
+
+### The gap
+
+With delegation enabled the host catalogue was installed into **neither** Tool
+System. The voice registry skipped it deliberately — registering it would let
+the voice model answer inline instead of delegating — and nothing installed it
+anywhere else. `get_time`, `calculate`, `uptime` and `system_status` existed in
+`host-tools` and were unreachable. On hardware this looked like a speech
+failure: asked the time, the assistant said it found no records.
+
+### Decided
+
+Host tools go to the delegated model and nowhere else. A second direct path
+from the voice model would be a second policy surface, and the one nobody
+watches becomes the one that matters. The cost is accepted and real: the time
+now costs an acknowledgement and a background round trip.
+
+The allowlist is built from `installCatalogue().installed`, so a tool whose
+dependency is missing is never advertised to the model as available.
+
+### Two defects the first hardware run exposed
+
+Neither could have been caught by the offline suite as it stood.
+
+- **`DELEGATION_RESULT_INVALID` after a successful `system_status`.** The tool
+  ran in 203 ms; the delegation was still reported as failed. A host tool
+  answers from the machine, so there is no memory and no conversation turn to
+  cite — the brief demanded evidence, the model invented some, the broker
+  refused it. The brief now specifies an empty references array for host-tool
+  answers. The permissive case did not become a hole: an invented reference is
+  still refused, and a test holds both halves.
+- **A silent delivery reported as `NO_SESSION`.** Compaction carries no session
+  id on purpose so it can outlive the session it replaces. Reporting that as a
+  drop described a working handoff as a lost answer — in the operator console,
+  at the moment the user was waiting for one. Silent is now decided before the
+  session is looked at. The `NO_SESSION` path is narrowed, not removed: a
+  result meant to be spoken with nowhere to go is still a loss and still
+  reported.
+
+### Also landed
+
+Explicit `memory_create` behind a Czech trigger; composite current-turn capture
+on `intelligence_delegate`; delegated conversation ending; the recall prelude;
+verbatim/meaning separated with structured uncertainty (`memory-core` episode
+schema v4); per-request execution bounds in `intelligence-core`; and a full raw
+JSONL trace per run alongside the concise console.
+
+That last one mattered more than it looks: the console had been suppressing
+handoff and compaction events, so an absent `handoff.prepared` in the terminal
+was read as evidence that no handoff ran. It had run.
+
+### Hardware evidence — `trace-20260815-172539.jsonl`
+
+- `get_time` and `system_status` executed through delegation and were answered
+  aloud.
+- Handoff ran `prepared → compaction.started → compaction.completed → ready →
+  committed`, and the conversation continued across it.
+- The logical session id was stable while the physical session changed.
+- One episode, kept open across the cutover, closed once at the end.
+
+Still UNVERIFIED: the post-handoff `conversation_recall` answer to a
+qualifier, delegated `end_conversation`, and echo cancellation across a
+cutover under controlled conditions. The complete scenario is **not** VERIFIED.
+
+### Software verification
+
+`assistant-runtime` 267, `memory-core` 59, `intelligence-core` 96 — all
+passing, `npm run verify` clean in each. Every `assistant-runtime` test file
+also run in isolation with a hard timeout.
+
+### Not a defect, recorded so it is not rediagnosed
+
+One earlier run produced no speech at all: connect in 135 ms, greeting sent,
+input transcribed, zero output for 25 s, no error, clean close — while a text
+model call succeeded in the same second. The rate-limit dashboard did not
+explain it: the only breached row was a text model, from the previous day, that
+this assistant does not call. Rerunning with no changes worked. Transient
+provider failure.
+
+---
+
 ## Milestone 9 — The conversation outlives the session — 2026-08-15 — PARTIAL
 
 Repository: `assistant-runtime` alone. Found while scripting the hardware test,
