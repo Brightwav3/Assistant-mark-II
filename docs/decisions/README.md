@@ -65,3 +65,4 @@ to judge where a reference belongs, only to name the files your decision governs
 
 - [0001 — A capability's home is decided by whether it can answer within its turn](0001-capability-homes.md)
 - [0002 — A late result from a superseded attempt is dropped, not delivered](0002-authority-generation.md)
+- [0003 — A delegated tool failure cannot produce a completed result](0003-delegation-tool-failures-remain-failed.md)

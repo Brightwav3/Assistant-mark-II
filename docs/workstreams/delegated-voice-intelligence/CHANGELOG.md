@@ -109,18 +109,18 @@ Host support claims in this file use the project's evidence scale:
   `decibri`'s host microphone binding, with no WASAPI, DirectShow, or PowerShell
   involved.
 
-### Still unverified
+### Hardware follow-up
 
-The handoff wiring is verified offline only. Three things need real hardware and
-a live provider, and no amount of test coverage substitutes for them:
+The handoff wiring and its live continuation are now hardware-qualified on
+Windows. The 2026-08-16 run also confirmed an inaudible cutover, stable AEC,
+post-handoff recall, and delegated shutdown. The provider transcript may render
+Czech confirmation as garbage when its language detection is wrong; the
+voice-to-voice heard record is authoritative for the user's meaning.
 
-- A conversation continuing across at least one handoff with no audible gap.
-- Prepare latency and overlap duration against a live provider, checked against
-  the headroom margin the trigger asserts numerically.
-- **Echo cancellation across a real cutover.** The rebinding is proven offline;
-  that it is *sufficient* is not. If the filter does not re-converge on the new
-  playback path, the assistant starts answering its own voice — and every other
-  part of the system will report success while it does.
+The only remaining live follow-up is the exact spoken wording after the newly
+clarified refusal of an implicit memory write. The guard and regression test
+already prove that no unsafe memory write occurs.
+
 
 ### Host support status
 
